@@ -1,0 +1,14 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+docker-compose = "==1.25.4"
+openapi2jsonschema = "==0.9.1"
+yq = "==2.10.0"
+
+[requires]
+python_version = "3"

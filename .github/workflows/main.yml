@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "*"
+
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout-repo
+      uses: actions/checkout@v2
+    - name: setup-docker
+      uses: docker-practice/actions-setup-docker@0.0.1
+    - name: build-in-docker
+      run: ./build-docker.sh

@@ -1,0 +1,5 @@
+{{#unless openapi.__noSchemas}}
+## Schemas
+
+{{#each openapi.components.schemas as |schemaDef name|}}{{~>schema schema=schemaDef schemaName=name renderSlug=true~}}{{/each}}
+{{/unless}}

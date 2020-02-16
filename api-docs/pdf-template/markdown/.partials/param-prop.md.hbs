@@ -1,0 +1,24 @@
+<tr>
+  <td>{{tree path propName}}{{propName}} {{#if prop.required}} <strong>(required)</strong>{{/if}}</td>
+  <td>{{prop.in}}</td>
+  <td>{{#if prop.descriptionAsHTML}}{{{prop.descriptionAsHTML}}}{{else}}-{{~/if}}</td>
+  <td>
+    {{#if prop.schema}}- <b>type</b>: {{prop.schema.type}}{{~#if prop.schema.anyOf}}anyOf{{~/if}}{{~#if prop.schema.oneOf}}oneOf{{~/if}}{{~#if prop.schema.items.type}}({{prop.schema.items.type}}){{~/if}}<br>{{#if prop.schema.minLength}}- <b>minLength</b>: {{prop.schema.minLength}}<br>{{else}}{{~/if}}{{#if prop.schema.maxLength}}- <b>maxLength</b>: {{prop.schema.maxLength}}<br>{{else}}{{~/if}}{{#if prop.schema.minimum}}- <b>minimum</b>: {{prop.schema.minimum}}<br>{{else}}{{~/if}}{{#if prop.schema.maximum}}- <b>maximum</b>: {{prop.schema.maximum}}<br>{{else}}{{~/if}}{{{acceptedValues prop.schema.enum prop.schema.pattern}}}{{else}}-{{/if}}  
+  </td>
+  <td>{{#if required}} <b>✔</b>{{/if}}</td>
+</tr>
+{{#each prop.anyOf}}
+{{> paramProp prop=. propName=@key path=(buildPath ../propName ../path @key)}}
+{{/each}}
+{{#each prop.oneOf}}
+  {{> paramProp prop=. propName=@key path=(buildPath ../propName ../path @key)}}
+{{/each}}
+{{#each prop.properties}}
+{{> paramProp prop=. propName=@key required=(isRequired ../prop @key) path=(buildPath ../propName ../path @key)}}
+{{/each}}
+{{#each prop.additionalProperties.properties}}
+{{> paramProp prop=. propName=@key required=(isRequired ../prop.additionalProperties @key) path=(buildPath ../propName ../path @key)}}
+{{/each}}
+{{#each prop.items.properties}}
+{{> paramProp prop=. propName=@key required=(isRequired ../prop.items @key) path=(buildPath ../propName ../path @key)}}
+{{/each}}

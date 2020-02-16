@@ -1,0 +1,23 @@
+<tr>
+  <td>{{#if prop.deprecated}}<s>{{tree path rootKey rootType propName}}</s> (deprecated){{else}}{{tree path rootKey rootType propName}}{{/if}}</td>
+  <td>{{#if prop.descriptionAsHTML}}{{{prop.descriptionAsHTML}}}{{else}}-{{~/if}}</td>
+  <td>
+    - <b>type</b>: {{prop.type}}{{~#if prop.anyOf}}anyOf{{~/if}}{{~#if prop.oneOf}}oneOf{{~/if}}{{~#if prop.items.type}}({{prop.items.type}}){{~/if}}<br>{{#if prop.minLength}}- <b>minLength</b>: {{prop.minLength}}<br>{{else}}{{~/if}}{{#if prop.maxLength}}- <b>maxLength</b>: {{prop.maxLength}}<br>{{else}}{{~/if}}{{#if prop.minimum}}- <b>minimum</b>: {{prop.minimum}}<br>{{else}}{{~/if}}{{#if prop.maximum}}- <b>maximum</b>: {{prop.maximum}}<br>{{else}}{{~/if}}{{{acceptedValues prop.enum prop.pattern}}}  
+  </td>
+  <td>{{#if required}} <b>✔</b>{{/if}}</td>
+</tr>
+{{#each prop.anyOf}}
+{{> schemaProp rootKey=../rootKey rootType=../rootType parentType=../prop.type prop=. propName=@key path=(buildPath ../propName ../path @key ../prop.type)}}
+{{/each}}
+{{#each prop.oneOf}}
+  {{> schemaProp rootKey=../rootKey rootType=../rootType parentType=../prop.type prop=. propName=@key path=(buildPath ../propName ../path @key ../prop.type)}}
+{{/each}}
+{{#each prop.properties}}
+{{> schemaProp rootKey=../rootKey rootType=../rootType parentType=../prop.type prop=. propName=@key required=(isRequired ../prop @key) path=(buildPath ../propName ../path @key ../prop.type)}}
+{{/each}}
+{{#each prop.additionalProperties.properties}}
+{{> schemaProp rootKey=../rootKey rootType=../rootType parentType=../prop.type prop=. propName=@key required=(isRequired ../prop.additionalProperties @key) path=(buildPath ../propName ../path @key  ../prop.type)}}
+{{/each}}
+{{#each prop.items.properties}}
+{{> schemaProp rootKey=../rootKey rootType=../rootType parentType=../prop.type prop=. propName=@key required=(isRequired ../prop.items @key) path=(buildPath ../propName ../path @key ../prop.type)}}
+{{/each}}

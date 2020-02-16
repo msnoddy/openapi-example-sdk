@@ -1,0 +1,328 @@
+openapi: "3.0.1"
+
+info:
+  title: Document Store
+  version: 0.2.5
+  license:
+    name: MIT
+  contact:
+    name: Matthew Snoddy
+
+  description: |
+    # README
+
+    ### Version History
+
+    | Version | Changes | Author         |
+    |---------|--------------------------------------------------------------|----------------|
+    | 0.2.0   | - More changes | Matthew Snoddy |
+    | 0.1.0   | - Adding endpoint for login | Matthew Snoddy |
+
+    ### Overview
+
+    This API provides storage and retrieval of binary documents, with optional `JSON` metadata.
+
+    ### Authentication
+
+    A login method is exposed that can be used to authenticate using a username and password. This
+    will issue a JWT token on success that should be passed in a HTTP header for API calls.
+
+    ```
+    Authorization: Bearer <jwt-token>
+    ```
+    
+    ### Healthcheck Endpoint
+
+    An endpoint is provided that can be used to check the status of an API instance. This does not
+    require authentication and will return a `204 No Content` to indicate the API is up and healthy.
+
+servers:
+  - url: http://localhost:8080/doc-store/api/v1
+    description: Mock API Server
+
+tags:
+  - name: Login
+    description: API authentication endpoint
+  - name: Document
+    description: Create, retrieve and delete documents & metadata
+  - name: Status
+    description: Check API health
+
+security:
+  - bearerAuth: [] 
+  
+paths:
+  /login:
+    post:
+      summary: Login
+      operationId: login
+      security: []
+      tags:
+        - Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/login-request"
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/login-response"
+        400:
+          description: Username/password not provided or format was invalid
+        401:
+          description: Invalid username and password combination
+        500:
+          description: Error during login
+
+  /document:
+    post:
+      summary: Upload a new document
+      operationId: uploadDocument
+      tags:
+        - Document
+      requestBody:
+        content: 
+          application/json: 
+            schema:
+              type: object
+              required:
+                - metadata
+                - content
+              properties:      
+                metadata:            
+                  $ref: "#/components/schemas/map"
+                content:
+                  type: string
+                  format: binary
+            encoding:
+              content:
+                contentType: "*/*"
+      responses:
+        201:
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/doc-id"
+        400:
+          description: Document metadata was invalid
+        401:
+          description: Request was not authorised
+        403:
+          description: User does not have permission to upload documents 
+        404:
+          description: Document with id `docId` was not found
+        406:
+          description: Document content was empty
+        500:
+          description: Error uploading document        
+  /document/{docId}/content:
+    get:
+      summary: Download document content
+      operationId: getDocumentContent
+      tags:
+        - Document
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          description: The id of the document to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Document content
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              example: "attachment; filename=3fa85f64-5717-4562-b3fc-2c963f66afa6.txt"
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+              examples:
+                pdfDocument:
+                  summary: A sample PDF document
+                  externalValue: https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+        401:
+          description: Request was not authorised
+        403:
+          description: User does not have permission to access the content of document with id `docId` 
+        404:
+          description: Document with id `docId` was not found
+        500:
+          description: Error getting content for document with id `docId`        
+  /document/{docId}/metadata:
+    get:
+      summary: Get document metadata
+      operationId: getDocumentMetadata
+      tags:
+        - Document
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          description: The id of the document to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Document metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/doc-metadata"
+        401:
+          description: Request was not authorised
+        403:
+          description: User does not have permission to access the metadata for document with id `docId` 
+        404:
+          description: Document with id `docId` was not found
+        500:
+          description: Error getting metdata for document with id `docId`
+  /document/{docId}:
+    delete:
+      summary: Delete document 
+      operationId: deleteDocument
+      tags:
+        - Document
+      parameters:
+        - name: docId
+          in: path
+          required: true
+          description: The id of the document to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Document was deleted successfully
+        401:
+          description: Request was not authorised
+        403:
+          description: User does not have permission to delete the document with id `docId` 
+        404:
+          description: Document with id `docId` was not found
+        500:
+          description: Error deleting document with id `docId`
+
+  /status:
+    get:
+      summary: API health check
+      operationId: checkApiStatus
+      security: []
+      tags:
+        - Status
+      responses:
+        204:
+          description: API is up and healthy
+        503:
+          description: API is down/unhealthy
+
+components:
+  schemas:
+    non-empty-string:
+      type: string
+      minLength: 1
+    login-request:
+      type: object
+      required: 
+        - username
+        - password
+      properties:
+        username:
+          allOf:
+            - $ref: "#/components/schemas/non-empty-string"
+            - x-faker: internet.userName
+        password:
+          $ref: "#/components/schemas/non-empty-string"
+      example: 
+        username: joe.bloggs
+        password: cornflakes
+    login-response:
+      type: object
+      required:
+        - token
+        - expiryInMs
+      properties:
+        token:
+          allOf:
+            - $ref: "#/components/schemas/non-empty-string"
+            - x-faker: random.alphaNumeric
+        expiryInMs:
+          type: number
+          format: int64
+          minimum: 1
+      example: 
+        token: lfna8d627enifp2393q9rj0q03
+        expiryInMs: 900000
+    map:
+      type: object
+      additionalProperties:
+        type: string
+      minItems: 0
+      example:
+        tags: "history,audit,belfast"
+    doc-metadata:
+      type: object
+      required:
+        - id
+        - creationDateTime
+        - lastModifiedDateTime
+        - mimeType
+        - sizeInBytes
+        - userMetadata
+      properties:
+        id:
+          type: string
+          format: uuid
+        creationDateTime:
+          type: string
+          format: date-time
+        lastModifiedDateTime:
+          type: string
+          format: date-time
+        mimeType:
+          $ref: "#/components/schemas/non-empty-string"
+        sizeInBytes:
+          type: number
+          format: int64
+        userMetadata:
+          $ref: "#/components/schemas/map"
+      example:
+        id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        creationDateTime: "2020-02-11T14:50:12Z"
+        lastModifiedDateTime: "2020-02-11T20:14:46Z"
+        mimeType: application/pdf
+        sizeInBytes: 20000
+        userMetadata:
+          tags: "history,audit,belfast"
+    doc-id:
+      type: object
+      required:
+        - documentId
+      properties:
+        documentId:
+          type: string
+          format: uuid
+      example:
+        documentId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token required to use the document endpoints
