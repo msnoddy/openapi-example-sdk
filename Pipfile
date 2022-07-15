@@ -6,9 +6,9 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-docker-compose = "==1.25.4"
+docker-compose = "==1.29.2"
 openapi2jsonschema = "==0.9.1"
-yq = "==2.10.0"
+yq = "==3.0.2"
 
 [requires]
 python_version = "3"
